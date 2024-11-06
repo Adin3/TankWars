@@ -35,7 +35,7 @@ TankWars::TankWars()
     
     terrain = Terrain(resolution);
     EntityManager::getInstance().addPlayer(std::make_shared<Player>(GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_SPACE, &terrain, glm::vec3(0, 1, 0), 100));
-    //EntityManager::getInstance().addPlayer(std::make_shared<Player>(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_ENTER, &terrain, glm::vec3(1, 0, 0), 600));
+    EntityManager::getInstance().addPlayer(std::make_shared<Player>(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_ENTER, &terrain, glm::vec3(1, 0, 0), 600));
 }
 
 
@@ -52,6 +52,7 @@ void TankWars::Init()
 void TankWars::FrameStart()
 {
     glClearColor(0.45, 0.75, 0.9, 0.1);
+    //glClearColor(0.0f, 0.0f, 0.f, 0.1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glm::ivec2 resolution = window->GetResolution();

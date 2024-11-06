@@ -44,12 +44,12 @@ std::vector<Renderer> Bullet::Render(float deltaTime)
 	if (pos.x < 10 || pos.x > terrain->getHeightMap().size() * terrain->getTileSize() - 10) {
 		EntityManager::getInstance().removeEntity(id);
 	}
-	if (points[x + origin.x] > y + origin.y || points[origin.x + x + 1] > y + origin.y) {
+	if (points[(x + origin.x) / terrain->getTileSize()] > y + origin.y || points[(origin.x + x + 1) / terrain->getTileSize()] > y + origin.y) {
 		for (int i = -40; i < 40; i++) {
 
 			float j = 40 - abs(i);
 			float pyt = sqrt(40 * 40 - i * i);
-			float value = glm::max(0.f, glm::min(x + origin.x + i, (float)(terrain->getHeightMap().size() - 1)));
+			float value = glm::max(0.f, glm::min((x + origin.x + i) / terrain->getTileSize(), (float)(terrain->getHeightMap().size() - 1)));
 			points[value] = glm::min((float)points[value], origin.y + y - pyt);
 		}
 		terrain->setHeightMap(points);

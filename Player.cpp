@@ -25,7 +25,7 @@ Player::Player(unsigned int ktml, unsigned int ktmr,
     this->keyPipeMoveLeft = kpml;
     this->keyPipeMoveRight = kpmr;
     this->keyShoot = ks;
-    pos = { tankX, terrain->getHeightMap()[tankX] };
+    pos = { tankX, terrain->getHeightMap()[tankX / terrain->getTileSize()]};
     radius = 40;
 }
 
@@ -46,23 +46,23 @@ std::vector<Renderer> Player::Render(float deltaTime)
     std::vector<int> points = terrain->getHeightMap();
     squareSide = terrain->getTileSize();
     float sign = 1;
-    float tankY = glm::mix(points[(tankX + 40) / squareSide], points[(tankX + 80) / squareSide], ((int)tankX % (int)squareSide) / squareSide);
-    glm::vec2 normal = glm::vec2(40, 0);
-    glm::vec2 deviation = glm::vec2(40, points[(tankX + 80) / squareSide] - tankY);
-    glm::vec2 deviation1 = glm::vec2(-40, points[glm::max(0.f,(tankX)) / squareSide] - tankY);
+    float tankY = glm::mix(points[(tankX) / squareSide], points[(tankX + 10) / squareSide], (float)((int)(tankX) % (int)(squareSide) / (float)squareSide));
+    glm::vec2 normal = glm::vec2(10, 0);
+    glm::vec2 deviation = glm::vec2(10, points[(tankX + 10) / squareSide] - tankY);
+    glm::vec2 deviation1 = glm::vec2(-10, points[glm::max(0.f,(tankX - 10)) / squareSide] - tankY);
     glm::vec2 addin = deviation - deviation1;
     float dot = glm::dot(glm::normalize(normal), glm::normalize(addin));
     float angle = glm::acos(dot);
     if (deviation.y < deviation1.y && sign == 1) sign *= -1;
     if (deviation.y > deviation1.y && sign == -1) sign *= -1;
-    tankAngle = sign * angle;
+    tankAngle = glm::mix(tankAngle, sign * angle, 0.5);
 
-    pos = { tankX + 40, tankY - 10 };
+    pos = { tankX, tankY - 10};
 
     glm::mat3 modelMatrix;
     modelMatrix = glm::mat3(1);
-    modelMatrix *= transform2D::Translate(tankX + 40, tankY - 10);
-    modelMatrix *= transform2D::Rotate(sign * angle);
+    modelMatrix *= transform2D::Translate(tankX, tankY - 10);
+    modelMatrix *= transform2D::Rotate(tankAngle);
     modelMatrix *= transform2D::Translate(-40, 0);
     modelMatrix *= transform2D::Scale(4, 4);
     renderer.push_back(Renderer(chassis, "VertexColor", modelMatrix));
@@ -74,14 +74,20 @@ std::vector<Renderer> Player::Render(float deltaTime)
     renderer.push_back(Renderer(head, "VertexColor", modelMatrix2));
 
     glm::mat3 modelMatrix3 = glm::mat3(1);
-    modelMatrix3 *= transform2D::Translate(tankX + 40, tankY - 10);
-    modelMatrix3 *= transform2D::Rotate(sign * angle);
+    modelMatrix3 *= transform2D::Translate(tankX, tankY - 10);
+    modelMatrix3 *= transform2D::Rotate(tankAngle);
     modelMatrix3 *= transform2D::Translate(-2, 40);
-    modelMatrix3 *= transform2D::Rotate(shootX - sign * angle);
+    modelMatrix3 *= transform2D::Rotate(shootX - tankAngle);
     modelMatrix3 *= transform2D::Translate(0, 15);
     modelMatrix3 *= transform2D::Scale(0.5, 2);
     modelMatrix3 *= transform2D::Translate(-5, -5);
     renderer.push_back(Renderer(body, "VertexColor", modelMatrix3));
+
+    glm::mat3 hpModelMatrix;
+    hpModelMatrix = glm::mat3(1);
+    hpModelMatrix *= transform2D::Translate(tankX - 30, tankY + 80);
+    hpModelMatrix *= transform2D::Scale(health, 1);
+    renderer.push_back(Renderer(body, "VertexColor", hpModelMatrix));
 
     glm::mat3 bulletModelMatrix = glm::mat3(1);
     bulletModelMatrix *= modelMatrix3;

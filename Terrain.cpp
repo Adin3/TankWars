@@ -45,10 +45,10 @@ std::vector<Renderer> Terrain::Render(float deltaTime)
     }
 
     if (frame == true) {
-        frame = false;
+        //frame = false;
         std::vector<int> tempPoints = points;
         for (int i = 0; i < number_of_tiles - 1; i++) {
-            if (2 < abs(points[i] - points[i + 1])) {
+            if (10 < abs(points[i] - points[i + 1])) {
                 if (points[i] > points[i + 1]) {
                     tempPoints[i] -= 1;
                     tempPoints[i + 1] += 1;
