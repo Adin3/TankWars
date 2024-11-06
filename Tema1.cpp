@@ -9,7 +9,6 @@
 #include "lab_m1/Tema1/Transform2D.h"
 
 using namespace std;
-using namespace m1;
 
 
 
@@ -23,22 +22,20 @@ TankWars::TankWars()
     camera->SetRotation(glm::vec3(0, 0, 0));
     camera->Update();
     // GetCameraInput()->SetActive(true);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    Shader* shader = new Shader("WaterShader");
+    shader->AddShader(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::SHADERS, "MVP.Texture.VS.glsl"), GL_VERTEX_SHADER);
+    shader->AddShader(PATH_JOIN(window->props.selfDir, RESOURCE_PATH::SHADERS, "Water.FS.glsl"), GL_FRAGMENT_SHADER);
+    shader->CreateAndLink();
+    shaders[shader->GetName()] = shader;
 
-    glm::vec3 corner = glm::vec3(0, 0, 0);
-    number_of_tiles = resolution.x / 1;
-    squareSide = resolution.x / number_of_tiles;
+    water = Water();
 
-    Mesh* square1 = object2D::CreateSquare("square1", corner, 1, glm::vec3(1, 1, 0.6), true);
-    AddMeshToList(square1);
-
-    Mesh* square2 = object2D::CreateSquare("square2", corner, 20, glm::vec3(0, 1, 0), true);
-    AddMeshToList(square2);
-
-    for (int i = 0; i < number_of_tiles; i++) {
-        points.push_back(100 * glm::sin(i * resolution.x / number_of_tiles * 0.01f - 0.7) + 350);
-    }
-    points.push_back(points[number_of_tiles - 1]);
-    tankX = 100;
+    
+    terrain = Terrain(resolution);
+    EntityManager::getInstance().addPlayer(std::make_shared<Player>(GLFW_KEY_A, GLFW_KEY_D, GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_SPACE, &terrain, glm::vec3(0, 1, 0), 100));
+    //EntityManager::getInstance().addPlayer(std::make_shared<Player>(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, GLFW_KEY_DOWN, GLFW_KEY_ENTER, &terrain, glm::vec3(1, 0, 0), 600));
 }
 
 
@@ -51,7 +48,6 @@ void TankWars::Init()
 {
 
 }
-
 
 void TankWars::FrameStart()
 {
@@ -66,55 +62,34 @@ void TankWars::FrameStart()
 
 void TankWars::Update(float deltaTimeSeconds)
 {
-    glm::ivec2 resolution = window->GetResolution();
-    glm::mat3 modelMatrix;
-    for (int i = 0; i < number_of_tiles; i++) {
-        modelMatrix = glm::mat3(1);
-        modelMatrix *= transform2D::Translate(0, points[i]);
-        modelMatrix *= transform2D::Translate(i * squareSide, -points[i]);
-        modelMatrix *= transform2D::Shear(0.f, (points[i+1] - points[i]) / squareSide);
-        modelMatrix *= transform2D::Scale(squareSide, points[i]);
-        RenderMesh2D(meshes["square1"], shaders["VertexColor"], modelMatrix);
+   
+    // std::cout << "FPS: " << 1000 / deltaTimeSeconds / 1000 << std::endl;
+    int loc = shaders["WaterShader"]->GetUniformLocation("time");
+    shaders["WaterShader"]->Use();
+    glUniform1f(loc, (float)glfwGetTime());
+
+    for (auto& r : terrain.Render(deltaTimeSeconds)) {
+        RenderMesh2D(r.tile, shaders[r.shader], r.model);
     }
-    float sign = 1;
-    float tankY = glm::mix(points[(tankX + 40) / squareSide], points[(tankX + 80) / squareSide], ((int)tankX % (int)squareSide) / squareSide);
-    glm::vec2 normal = glm::vec2(40, 0);
-    glm::vec2 deviation = glm::vec2(40, points[(tankX + 80) / squareSide] - tankY);
-    glm::vec2 deviation1 = glm::vec2(-40, points[(tankX) / squareSide] - tankY);
-    glm::vec2 addin = deviation - deviation1;
-    float dot = glm::dot(glm::normalize(normal), glm::normalize(addin));
-    float angle = glm::acos(dot);
-    if (deviation.y < deviation1.y && sign == 1) sign *= -1;
-    if (deviation.y > deviation1.y && sign == -1) sign *= -1;
+    for (auto& e : EntityManager::getInstance().getPlayers()) {
+        for (auto& p : e.second->Render(deltaTimeSeconds)) {
+            RenderMesh2D(p.tile, shaders[p.shader], p.model);
+        }
+    }
 
-    modelMatrix = glm::mat3(1);
-    modelMatrix *= transform2D::Translate(tankX+40, tankY - 10);
-    modelMatrix *= transform2D::Rotate(sign * angle);
-    modelMatrix *= transform2D::Translate(-40, 0);
-    modelMatrix *= transform2D::Scale(4, 2);
-    RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix);
+    for (auto& e : EntityManager::getInstance().getEntities()) {
+        for (auto& r : e.second->Render(deltaTimeSeconds)) {
+            RenderMesh2D(r.tile, shaders[r.shader], r.model);
+        }
+    }
 
-    glm::mat3 modelMatrix2 = glm::mat3(1);
-    modelMatrix2 *= modelMatrix;
-    //modelMatrix2 *= transform2D::Rotate(-sign * angle);
-    modelMatrix2 *= transform2D::Translate(5, 20);
-    modelMatrix2 *= transform2D::Scale(0.5, 0.5);
-    RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix2);
+    for (auto& p : EntityManager::getInstance().getPlayers()) {
+        EntityManager::getInstance().checkPlayerCollision(p.second);
+    }
 
-    glm::mat3 modelMatrix3 = glm::mat3(1);
-    /*modelMatrix3 *= modelMatrix2;
-    modelMatrix3 *= transform2D::Translate(8.5, 10);
-    modelMatrix3 *= transform2D::Rotate(shootX);
-    modelMatrix3 *= transform2D::Translate(-2.5, 10);
-    modelMatrix3 *= transform2D::Scale(0.5, 2);*/
-    modelMatrix3 *= transform2D::Translate(tankX + 40, tankY - 10);
-    modelMatrix3 *= transform2D::Rotate(sign * angle);
-    modelMatrix3 *= transform2D::Translate(-2, 40);
-    modelMatrix3 *= transform2D::Rotate(shootX);
-    modelMatrix3 *= transform2D::Translate(0, 25);
-    modelMatrix3 *= transform2D::Scale(0.5, 2);
-    modelMatrix3 *= transform2D::Translate(-5, -5);
-    RenderMesh2D(meshes["square2"], shaders["VertexColor"], modelMatrix3);
+    for (auto& r : water.Render(deltaTimeSeconds)) {
+        RenderMesh2D(r.tile, shaders[r.shader], r.model);
+    }
 }
 
 
@@ -125,24 +100,17 @@ void TankWars::FrameEnd()
 
 void TankWars::OnInputUpdate(float deltaTime, int mods)
 {
-    if (window->KeyHold(GLFW_KEY_A)) {
-        tankX -= deltaTime * 100;
-    }
-    if (window->KeyHold(GLFW_KEY_D)) {
-        tankX += deltaTime * 100;
-    }
-    if (window->KeyHold(GLFW_KEY_W)) {
-        shootX -= deltaTime * 10;
-    }
-    if (window->KeyHold(GLFW_KEY_S)) {
-        shootX += deltaTime * 10;
+    for (auto& p : EntityManager::getInstance().getPlayers()) {
+        p.second->Input(window, deltaTime);
     }
 }
 
 
 void TankWars::OnKeyPress(int key, int mods)
 {
-    
+    if (key == GLFW_KEY_L) {
+        terrain.setFrameTrue();
+    }
 }
 
 
