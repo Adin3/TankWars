@@ -15,4 +15,11 @@ namespace object2D
     Mesh* CreateCircle(const std::string& name, glm::vec3 leftBottomCorner, float length, glm::vec3 color, bool fill = false);
 
     Mesh* CreateChassis(const std::string& name, glm::vec3 leftBottomCorner, float length, glm::vec3 color, bool fill = false);
+
+    Mesh* CreateSquareTex(
+        const std::string& name,
+        glm::vec3 leftBottomCorner,
+        float length,
+        glm::vec3 color,
+        bool fill);
 }

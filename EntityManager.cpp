@@ -36,6 +36,11 @@ void EntityManager::addPlayer(std::shared_ptr<Player> p)
     }
 }
 
+void EntityManager::clearPlayers()
+{
+    players.clear();
+}
+
 // Method to get an entity by ID
 std::shared_ptr<Entity> EntityManager::getEntity(int id) const {
     if (entities.find(id) != entities.end())

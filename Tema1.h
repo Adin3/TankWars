@@ -20,6 +20,7 @@ private:
     void FrameStart() override;
     void Update(float deltaTimeSeconds) override;
     void FrameEnd() override;
+    void RenderSimpleMesh(Mesh* mesh, Shader* shader, const glm::mat4& modelMatrix, unsigned int texture1);
 
     void OnInputUpdate(float deltaTime, int mods) override;
     void OnKeyPress(int key, int mods) override;
@@ -40,4 +41,15 @@ private:
     Player player;
     Player player1;
     Water water;
+    unsigned int framebuffer;
+    unsigned int textureColorbuffer;
+    unsigned int rbo;
+    Mesh* frameBufferMesh;
+    float scaleF = 0;
+    enum GameState {
+        MENU,
+        PREGAME,
+        GAME,
+        END
+    } gameState = MENU;
 };

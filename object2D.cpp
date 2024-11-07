@@ -17,8 +17,8 @@ Mesh* object2D::CreateSquare(
 
     std::vector<VertexFormat> vertices =
     {
-        VertexFormat(corner, color / glm::vec3(2)),
-        VertexFormat(corner + glm::vec3(length, 0, 0), color / glm::vec3(2)),
+        VertexFormat(corner, color / glm::vec3(4)),
+        VertexFormat(corner + glm::vec3(length, 0, 0), color / glm::vec3(4)),
         VertexFormat(corner + glm::vec3(length, length, 0), color),
         VertexFormat(corner + glm::vec3(0, length, 0), color)
     };
@@ -29,6 +29,39 @@ Mesh* object2D::CreateSquare(
     if (!fill) {
         square->SetDrawMode(GL_POINTS);
     } else {
+        // Draw 2 triangles. Add the remaining 2 indices
+        indices.push_back(0);
+        indices.push_back(2);
+    }
+
+    square->InitFromData(vertices, indices);
+    return square;
+}
+
+Mesh* object2D::CreateSquareTex(
+    const std::string& name,
+    glm::vec3 leftBottomCorner,
+    float length,
+    glm::vec3 color,
+    bool fill)
+{
+    glm::vec3 corner = leftBottomCorner;
+    glm::vec3 normal = glm::vec3(0, 1, 0);
+    std::vector<VertexFormat> vertices =
+    {
+        VertexFormat(corner, color, normal, glm::vec2(0.0f, 0.0f)),
+        VertexFormat(corner + glm::vec3(length, 0, 0), color, normal, glm::vec2(1.0f, 0.0f)),
+        VertexFormat(corner + glm::vec3(length, length, 0), color, normal, glm::vec2(1.0f, 1.0f)),
+        VertexFormat(corner + glm::vec3(0, length, 0), color, normal, glm::vec2(0.0f, 1.0f))
+    };
+
+    Mesh* square = new Mesh(name);
+    std::vector<unsigned int> indices = { 0, 1, 2, 3 };
+
+    if (!fill) {
+        square->SetDrawMode(GL_POINTS);
+    }
+    else {
         // Draw 2 triangles. Add the remaining 2 indices
         indices.push_back(0);
         indices.push_back(2);

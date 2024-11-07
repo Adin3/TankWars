@@ -34,6 +34,7 @@ public:
 
     void addPlayer(std::shared_ptr<Player> p);
 
+    void clearPlayers();
     // Method to get an entity by ID
     std::shared_ptr<Entity> getEntity(int id) const;
 
